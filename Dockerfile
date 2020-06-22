@@ -6,13 +6,21 @@ FROM ${BASE_IMAGE}
 # Define arguments (usage: --build-arg LUSER=g)
 ARG GIT_REPO_DIR=~/repo.git
 ARG SERVER_APP_DIR
+ARG NSG_GROUP=nsggroup
 
 # Add these args to env in order to use them in git's hooks/post-receive script
 ENV GIT_REPO_DIR ${GIT_REPO_DIR:-~/repo.git}
 ENV GIT_REPO_SERVER_DIR ${SERVER_APP_DIR:-/var/www/repo}
+ENV NSG_GROUP ${NSG_GROUP:-nsggroup}
+
+# 0. Create a group that can write to the SERVER_APP_DIR
+# add git user to it, 
+# and any extending image that creates its user (optional)
+# should add its user to it in order to write files to the dir
+RUN addgroup -S ${NSG_GROUP}
 
 # 1. Create a git user account and use it
-RUN adduser --disabled-password git
+RUN adduser --disabled-password git ${NSG_GROUP}
 USER git
 # 2. create .ssh directory for that user
 WORKDIR /home/git

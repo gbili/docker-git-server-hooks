@@ -5,7 +5,11 @@ A docker layer intended to allow simple deployement of code using a git server a
 To build the image you can for example run:
 
 ```bash
+# using default FROM image
 sudo docker build -t gbili/git-server-hooks-node --build-arg SERVER_APP_DIR=/usr/src/app --build-arg LOCAL_USER=g .
+
+# using custom FROM image
+sudo docker build -t gbili/git-server-hooks-node --build-arg SERVER_APP_DIR=/usr/src/app --build-arg LOCAL_USER=g --build-arg BASE_IMAGE=gbili/node-ssh-git .
 ```
 
 In order to allow ssh authentication to git, you need to add the pusher's public key with:
