@@ -11,11 +11,11 @@ ARG SERVER_APP_DIR
 ENV GIT_REPO_DIR ${GIT_REPO_DIR:-~/repo.git}
 ENV GIT_REPO_SERVER_DIR ${SERVER_APP_DIR:-/var/www/repo}
 
-# 1. Create a git user account
-RUN sudo adduser git
-RUN su git
+# 1. Create a git user account and use it
+RUN adduser --disabled-password git
+USER git
 # 2. create .ssh directory for that user
-RUN cd
+WORKDIR /home/git
 RUN mkdir .ssh && chmod 700 .ssh
 RUN touch .ssh/authorized_keys && chmod 600 .ssh/authorized_keys
 

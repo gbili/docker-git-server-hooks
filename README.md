@@ -2,6 +2,12 @@
 
 A docker layer intended to allow simple deployement of code using a git server and post-receive hooks.
 
+To build the image you can for example run:
+
+```bash
+sudo docker build -t gbili/git-server-hooks-node --build-arg SERVER_APP_DIR=/usr/src/app --build-arg LOCAL_USER=g .
+```
+
 In order to allow ssh authentication to git, you need to add the pusher's public key with:
 
 ```dockerfile
