@@ -1,0 +1,18 @@
+#!/bin/bash
+echo "post-receive hook is being executed in server"
+while read oldrev newrev ref
+do
+    echo "oldrev: $oldrev, newrev: $newrev, ref: $ref"
+    branch=$(git rev-parse --symbolic --abbrev-ref $ref)
+
+    #if [[ "$branch" = "master" || "$branch" = "dev" ]];
+    #then
+        echo "$ref ref received.  Deploying $branch branch to production..."
+        unset GIT_INDEX_FILE
+        git --work-tree=$GIT_REPO_SERVER_DIR --git-dir=$GIT_REPO_DIR checkout -f $branch
+        (cd $GIT_REPO_SERVER_DIR; killall node; npm run restart)
+    # else
+        echo "Ref $ref successfully received.  Doing nothing: only the dev and m
+aster branch may be deployed on this server."
+    # fi
+done
