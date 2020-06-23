@@ -1,5 +1,5 @@
 # Allow customization of base image
-ARG BASE_IMAGE=gbili/node-ssh-git
+ARG BASE_IMAGE=gbili/nsg
 
 FROM ${BASE_IMAGE}
 
