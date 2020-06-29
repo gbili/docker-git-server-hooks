@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+
+  git-server:
+    image: docker.zivili.ch/gbili/nsg
+    container_name: git-server-hooks
+    ports:
+      - "2222:22"
+    volumes:
+      - git-server-keys:/git-server/keys
+      - git-server-repos:/git-server/repos
+      - nsg-node-app:/git-server/node-app
+    restart: always
+
+volumes:
+  git-server-keys:
+  git-server-repos:
+  nsg-node-app:
