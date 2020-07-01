@@ -60,19 +60,24 @@ Let's do it. Steps are:
 Once these are added you can easily push with:
 
 ```bash
-git remote add production git@<IP_ADDRESS>:~/repo.git
-git push production master
+git remote add live ssh://git@<IP_ADDRESS>:2222/get-server/repos/repo
+git push live master
 ```
 
-If you have set up and reverse nginx proxy for ssl with:
+If you have set up and reverse nginx proxy for ssl, you could do:
 
 ```bash
-...?
+git remote add live ssh://git@<domaine_name>:2222/get-server/repos/repo
+git push live master
 ```
 
-you could do
+# TODO
 
-```bash
-git remote add production git@<server_name>:~/repo.git
-git push production master
-```
+Find out how to pass environment variables to docker so that GIT_REPO_SERVER_DIR has a value
+
+Delete printenv from post-receive once we are sure our env variables are passed.
+
+Find out why npm is present in container but not to post-receive => use full path
+
+
+Last: change directory structure such that instead of having to put `/git-server/repos/repo` we can use `/gbili/blog.git` basically replace the volume mount point etc.
