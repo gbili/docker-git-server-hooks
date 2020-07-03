@@ -5,15 +5,15 @@ services:
     image: docker.zivili.ch/gbili/git-server-hooks:0.0.3
     container_name: git-server-hooks
     environment:
-      VIRTUAL_HOST: crystalball.at
-      LETSENCRYPT_HOST: crystalball.at
-      LETSENCRYPT_EMAIL: mail@crystalball.at
+      VIRTUAL_HOST: <VIRTUAL_HOST>
+      LETSENCRYPT_HOST: <VIRTUAL_HOST>
+      LETSENCRYPT_EMAIL: mail@<VIRTUAL_HOST>
     ports:
       - "2222:22"
     volumes:
-      - git-server-keys:/u/keys
-      - git-server-repos:/u/gbili
-      - node-apps:/node-server/gbili
+      - git-server-keys:/<GIT_SERVER_DIR>/keys
+      - git-server-repos:/<GIT_SERVER_DIR>/<GIT_REPO_OWNERNAME>
+      - node-apps:/node-server/<GIT_REPO_OWNERNAME>
     restart: always
 
 volumes:
