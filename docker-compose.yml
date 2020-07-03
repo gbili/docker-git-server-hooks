@@ -1,19 +1,29 @@
-version: '3'
+version: '3.7'
 
 services:
-
   git-server:
-    image: docker.zivili.ch/gbili/git-server-hooks
+    image: docker.zivili.ch/gbili/git-server-hooks:0.0.3
     container_name: git-server-hooks
+    environment:
+      VIRTUAL_HOST: crystalball.at
+      LETSENCRYPT_HOST: crystalball.at
+      LETSENCRYPT_EMAIL: mail@crystalball.at
     ports:
       - "2222:22"
     volumes:
-      - git-server-keys:/git-server/keys
-      - git-server-repos:/git-server/repos
-      - node-apps:/git-server/node-app
+      - git-server-keys:/u/keys
+      - git-server-repos:/u/gbili
+      - node-apps:/node-server/gbili
     restart: always
 
 volumes:
   git-server-keys:
   git-server-repos:
   node-apps:
+
+# add it to your desired network
+# e.g. let's encrypt nginx certbot (created separately)
+networks:
+  default:
+    external:
+      name: nginx-proxy

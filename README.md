@@ -79,5 +79,11 @@ Delete printenv from post-receive once we are sure our env variables are passed.
 
 Find out why npm is present in container but not to post-receive => use full path
 
+Last: change directory structure such that instead of having to put `/git-server/repos/repo` we can use `gbili/blog.git` basically replace the volume mount point etc.
 
-Last: change directory structure such that instead of having to put `/git-server/repos/repo` we can use `/gbili/blog.git` basically replace the volume mount point etc.
+```sh
+sudo docker build \
+--build-arg GIT_REPO_OWNERNAME=gbili \
+--build-arg GIT_REPO_NAME=blog \
+-t gbili/git-server-hooks:0.0.1
+```
