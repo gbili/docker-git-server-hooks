@@ -76,10 +76,6 @@ RUN chmod +x start.sh
 
 ARG COMMON_GROUP=nodegit
 
-RUN echo ${GIT_REPO_NAME} && \
-  echo ${GIT_REPO_DIR} && \
-  echo ${GIT_REPO_DEPLOY_DIR}
-
 # 6. Initialize the repo
 WORKDIR ${GIT_REPO_DIR}
 RUN git init --bare
