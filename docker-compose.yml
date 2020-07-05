@@ -11,14 +11,14 @@ services:
     ports:
       - "2222:22"
     volumes:
-      - git-server-keys:/<GIT_SERVER_DIR>/keys
-      - git-server-repos:/<GIT_SERVER_DIR>/<GIT_REPO_OWNERNAME>
+      - ssh-keys:/<GIT_SERVER_DIR>/keys
+      - git-repos:/<GIT_SERVER_DIR>/<GIT_REPO_OWNERNAME>
       - node-apps:/node-server/<GIT_REPO_OWNERNAME>
     restart: always
 
 volumes:
-  git-server-keys:
-  git-server-repos:
+  ssh-keys:
+  git-repos:
   node-apps:
 
 # add it to your desired network
