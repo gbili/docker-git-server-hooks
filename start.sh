@@ -45,7 +45,7 @@ if [ -d "${GIT_REPO_DEPLOY_DIR}" ]; then
   # This will allow sharing volume permissions
   # with other containers
   echo "Will print group:password:GID:user(s) of deploy dir:"
-  echo getent group ${COMMON_GROUP}
+  getent group ${COMMON_GROUP}
   ls -la ${GIT_REPO_DEPLOY_DIR}
   echo "Be careful with the above output, it is likely that the actual sub repo dir has different owner and group"
 fi
