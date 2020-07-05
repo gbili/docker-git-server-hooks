@@ -87,13 +87,20 @@ RUN git init --bare
 # You can use ENV variables within them but make sure
 # to remove the $ and use sed to replace them with the value (see start.sh)
 COPY hooks/post-receive.tpl ${GIT_REPO_DIR}/hooks/post-receive
-RUN chmod -R 700 ${GIT_REPO_DIR}/hooks/post-receive
+RUN chmod -R ug+rwx ${GIT_REPO_DIR}/hooks/post-receive
 
 # We need a common group for node and git
 # to allow each of them writing contents to deploy dir
 RUN addgroup ${COMMON_GROUP}
 RUN addgroup git ${COMMON_GROUP}
 RUN addgroup node ${COMMON_GROUP}
+
+# Allow "git" user's group to write on its files
+USER git
+RUN umask 002
+
+# Go back to root
+USER root
 
 # Initialize the deployment dir for the repo
 WORKDIR ${GIT_REPO_DEPLOY_DIR}

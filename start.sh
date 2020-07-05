@@ -39,8 +39,8 @@ if [ -d "${GIT_REPO_DEPLOY_DIR}" ]; then
   echo "Setting up ${GIT_REPO_DEPLOY_DIR}";
   cd ${GIT_REPO_DEPLOY_DIR}
   chown -R node:${COMMON_GROUP} .
-  chmod -R ug+rwX .
-  find . -type d -exec chmod g+s '{}' +
+  chmod -R 2770 .
+  chmod g+s .
   # Let bilder know the GID of the common group
   # This will allow sharing volume permissions
   # with other containers
