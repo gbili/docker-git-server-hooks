@@ -2,6 +2,44 @@
 
 A docker layer intended to allow simple deployment of code using a git server and post-receive hooks.
 
+## Solved issues
+
+There was a problem making sure that once you `git push` to the git server, git was able to deploy the code to `node-apps` app directory. `node-apps` is a volume shared between `git-server-hooks` container and `node-app-js` container.
+
+As [this post suggests](https://medium.com/@nielssj/docker-volumes-and-file-system-permissions-772c1aee23ca), what matters to being able to write to a dir, is that containers' user/group which waht to write, has the same UID or GID than the user or group having read/write/execute powers on the volume (regardless of name or passwords).
+
+Since we are using a shared volume, it will be created at runtime, and thus all the code responsible for giving specific users or group permissions on the volume should execute at runtime and not at build time. That's why we place all the code in `start.sh`.
+
+We also create a common group, for `git` and `node`. This `COMMON_GROUP` is useful for two things:
+
+1. When `git` checks out and writes to the `node-apps` volume, it has to have access to it, since we don't want to only give the `rwx` rights to `git` (`node` will need rights as well) we create a group who's GID will be reused in the `node-app-js` container for `node`
+2. And if we want to run node commands from the `post-receive` script, we need to give rights to `node` from `git-server-hooks`' container.
+
+This giving of rights to the `COMMON_GROUP` is made in the `start.sh` script using:
+
+```bash
+  echo "Setting up ${GIT_REPO_DEPLOY_DIR}";
+  cd ${GIT_REPO_DEPLOY_DIR}
+  chown -R node:${COMMON_GROUP} .
+  chmod -R 2770 .
+  # make all future files inherit group rights
+  chmod g+s .
+```
+
+Combined with the `umask` for the `git` user:
+
+```dockerfile
+# Allow "git" user's group to write on its files
+USER git
+RUN umask 002
+```
+
+With this trick all the files created by `git` while checking out on `node-apps` volume (which belonged to `git` and thus inaccessible to `node`) will be accessible to `git`'s group `COMMON_GROUP`.
+
+**NOTE**: apparently (if my understanding is correct), `git` `checkout` creates files with permissions restricted to `git`'s user and gives only `read` access to it's group. The group used by `git` is `COMMON_GROUP` (`nodegit`) because of the `chmod g+s` on `node-apps` repo dir made during `start.sh`. So the step that ties the process up is this `umask 002`. [See this so answer for a better explanation](https://unix.stackexchange.com/questions/12842/make-all-new-files-in-a-directory-accessible-to-a-group).
+
+**IMPORTANT**: if you try to change the users and groups, make sure to check the GID they get and use the same in the other containers sharing the volume. And also be careful of when you try to make those changes, because too late and you might no longer be `root` and too early and the volume may not exist yet.
+
 ## Adding the keys
 
 When launching, `gbili/git-server-hooks` will execute `start.sh` script. The script uses the keys present in `/<GIT_SERVER_DIR>/keys/somekey.pub` and adds them to to the end of `/home/git/.ssh/authorized_keys`'s file.
@@ -12,11 +50,11 @@ Since we want to push to the Git repo, we must make sure `start.sh` will find ou
 
 > Adding them to the built image is a bad idea if your image is not private. So, how can we put the RSA keys to our container without adding them to the docker image ?
 
-The solution is to use _named volumes_. We will create a volume named `git-server-keys` and mount it to our container at `/<GIT_SERVER_DIR>/keys`. But of course this does not solve our problem entirely, we still need to put the data in it before our `gbili/git-server-hooks` container starts.
+The solution is to use _named volumes_. We will create a volume named `ssh-keys` and mount it to our container at `/<GIT_SERVER_DIR>/keys`. But of course this does not solve our problem entirely, we still need to put the data in it before our `gbili/git-server-hooks` container starts.
 
-We can do that using a temporary container that will solely serve as a volume "populator". We will remove the temporary container once it has fulfilled its duty of adding the keys to the volume `git-server-keys`.
+We can do that using a temporary container that will solely serve as a volume "populator". We will remove the temporary container once it has fulfilled its duty of adding the keys to the volume `ssh-keys`.
 
-**IMPORTANT**: `docker-compose` may name your volumes with a prefix, so `git-server-keys` volume in `docker-compose.yml` may end up renamed: `git-sever-hooks_git-server-keys`
+**IMPORTANT**: `docker-compose` may name your volumes with a prefix, so `ssh-keys` volume in `docker-compose.yml` may end up renamed: `git-sever-hooks_ssh-keys`
 
 Let's do it. Steps are:
 
@@ -35,15 +73,15 @@ Let's do it. Steps are:
    ```sh
    # move to the directory where you placed the public key
    cd ~/.g-ssh
-   # create a container on which we mount git-server-hooks_git-server-keys at /data
-   docker container create --name temp -v git-server-hooks_git-server-keys:/data busybox
+   # create a container on which we mount git-server-hooks_ssh-keys at /data
+   docker container create --name temp -v git-server-hooks_ssh-keys:/data busybox
    # copy contents of ./some_temp_dir... into temp's container /data dir
    docker cp . temp:/data
    # we can remove the container, and still keep the contents
    docker rm temp
    ```
 
-3. We can now `docker-compose up`, and the container will be able to see the public keys files in `/<GIT_SERVER_DIR>/keys` directory since we are mounting `git-sever-hooks_git-server-keys` that will be mounted there.
+3. We can now `docker-compose up`, and the container will be able to see the public keys files in `/<GIT_SERVER_DIR>/keys` directory since we are mounting `git-sever-hooks_ssh-keys` that will be mounted there.
 
    ```bash
    # move to where you have the docker-compose.yml file for the git-server-hooks
@@ -68,20 +106,22 @@ git push live master
 
 ## Arguments (ARG) and defaults
 
+- `COMMON_GROUP=nodegit`: the group that `git` and `node` have in common. It is important in this container to run the `npm install` command on `post-receive` hook. **IMPORTANT** it's GID should be reused in `node-app-js`, otherwise you won't be able to execute `npm` or `node` (aka serving the app).
 - `GIT_HOME=/home/git`: `/home/git`
-- `GIT_REPO_DEPLOY_DIR=${NODE_SERVER_DIR}/${GIT_REPO_OWNERNAME}/${GIT_REPO_NAME}`: `/node-server/user/repo`
-- `GIT_REPO_DIR=${GIT_REPOS_DIR}/${GIT_REPO_NAME}.git`: `/u/user/repo.git`
-- `GIT_REPO_NAME=repo`: `repo`
-- `GIT_REPO_OWNERNAME=user`: `user`
-- `GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPO_OWNERNAME}`: `/u/user`
-- `GIT_SERVER_DIR=/u`: `/u`
-- `GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys`: `/u/keys`
-- `NODE_SERVER_DIR=/node-server`: `/node-server`
+- `GIT_REPO_DEPLOY_DIR=${NODE_SERVER_DIR}/${GIT_REPO_OWNERNAME}/${GIT_REPO_NAME}`: `/node-server/user/repo`, this is where the code will be deployed to on `post-receive`. This directory is a volume shared with the `node-app-js` container so the permissions are really important and can easily get messed up.
+- `GIT_REPO_DIR=${GIT_REPOS_DIR}/${GIT_REPO_NAME}.git`: `/u/user/repo.git`: the `--bare` repository directory where your pushes will go.
+- `GIT_REPO_NAME=repo`: `repo`, the `--bare` repository name
+- `GIT_REPO_OWNERNAME=user`: `user`, the `--bare` repository's parent dirname. **TODO**: one day will accommodate many repos for single user.
+- `GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPO_OWNERNAME}`: `/u/user`, the `--bare` repository's parent dir.
+- `GIT_SERVER_DIR=/u`: `/u`, the directory where _repositories_ and _ssh keys_ are stored
+- `GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys`: `/u/keys`, where _ssh keys_ are stored
+- `NODE_SERVER_DIR=/node-server`: `/node-server`, the root mount point for deployed node apps. Apps live in subdirectories see `GIT_REPO_DEPLOY_DIR`.
 
 ## Environment variables (ENV) and defaults
 
-Env variables use defaults from build arguments.
+Env variables use defaults from build arguments. See arguments for descriptions.
 
+- `COMMON_GROUP=${COMMON_GROUP}`: `nodegit`
 - `GIT_HOME=${GIT_HOME}`: `/home/git`
 - `GIT_SERVER_DIR=${GIT_SERVER_DIR}`: `/u`
 - `GIT_REPO_NAME=${GIT_REPO_NAME}`: `repo`
@@ -106,7 +146,7 @@ Example changing the repo dir from `/u/user/repo.git` to `/u/gbili/blog.git` you
 sudo docker build \
 --build-arg GIT_REPO_OWNERNAME=gbili \
 --build-arg GIT_REPO_NAME=blog \
--t gbili/git-server-hooks:0.0.3
+-t gbili/git-server-hooks:0.0.5
 ```
 
 ## Addig new repositories
@@ -160,7 +200,7 @@ Using a separate container, requires using a different port
 
 ## Adding a new user
 
-**TODO**: Adding a new user is not possible. For one, they would share access to `git` user, therefore they could run scripts on each others' land. Secondly, the `git-server-repos` volume is mounted relative to one user. We would need to mount it relative to the `git-server` root, and adapt scripts accordingly.
+**TODO**: Adding a new user is not possible. For one, they would share access to `git` user, therefore they could run scripts on each others' land. Secondly, the `git-server-repos` volume is mounted relative to one user. We would need to mount it relative to the `git-server` root, and adapt scripts accordingly (which is feasable).
 
 ## Running the node server
 
