@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   git-server:
-    image: docker.zivili.ch/gbili/git-server-hooks:0.0.3
+    image: docker.zivili.ch/gbili/git-server-hooks:0.0.4
     container_name: git-server-hooks
     environment:
       VIRTUAL_HOST: <VIRTUAL_HOST>

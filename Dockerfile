@@ -93,10 +93,12 @@ RUN addgroup git ${COMMON_GROUP}
 RUN addgroup node ${COMMON_GROUP}
 
 # Initialize the deployment dir for the repo
-# a. to write in the deploy dir
 WORKDIR ${GIT_REPO_DEPLOY_DIR}
-RUN chown -R node:${COMMON_GROUP} .
-RUN chmod -R 770 .
+
+# Let bilder know the GID of the common group
+# This will allow sharing volume permissions
+# with other containers
+RUN getent group ${COMMON_GROUP}
 
 EXPOSE 22
 

@@ -24,7 +24,26 @@ if [ "$(ls -A ${GIT_REPOS_DIR}/)" ]; then
   cd $GIT_REPOS_DIR
   chown -R git:${COMMON_GROUP} .
   chmod -R ug+rwX .
+  # Ensure all future content in the folder will inherit group ownership
   find . -type d -exec chmod g+s '{}' +
+fi
+
+# node UID will likely change from container to container
+# so we give full access to it's group
+# IMPORTANT: if another container wants to write there,
+# add a group with same GID
+if [ "$(ls -A ${GIT_REPO_DEPLOY_DIR}/)" ]; then
+  cd ${GIT_REPO_DEPLOY_DIR}
+  chown -R node:${COMMON_GROUP} .
+  chmod -R ug+rwX .
+  find . -type d -exec chmod g+s '{}' +
+  # Let bilder know the GID of the common group
+  # This will allow sharing volume permissions
+  # with other containers
+  echo "Will print group:password:GID:user(s) of deploy dir:"
+  echo getent group ${COMMON_GROUP}
+  ls -la ${GIT_REPO_DEPLOY_DIR}
+  echo "Be careful with the above output, it is likely that the actual sub repo dir has different owner and group"
 fi
 
 # -D flag avoids executing sshd as a daemon
