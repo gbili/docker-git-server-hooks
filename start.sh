@@ -1,5 +1,7 @@
 #!/bin/sh
 
+printenv;
+
 # If there is some public key in keys folder
 # then it copies its contents to authorized_keys file
 if [ "$(ls -A ${GIT_SSH_PUBKEYS_DIR}/)" ]; then
