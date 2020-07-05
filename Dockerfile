@@ -33,6 +33,8 @@ ARG GIT_REPO_DEPLOY_DIR=${NODE_SERVER_DIR}/${GIT_REPO_OWNERNAME}/${GIT_REPO_NAME
 # /u/keys
 ARG GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys
 
+ARG COMMON_GROUP=nodegit
+
 ENV GIT_HOME=${GIT_HOME}
 ENV GIT_SERVER_DIR=${GIT_SERVER_DIR}
 ENV GIT_REPO_NAME=${GIT_REPO_NAME}
@@ -40,6 +42,9 @@ ENV GIT_REPOS_DIR=${GIT_REPOS_DIR}
 ENV GIT_REPO_DIR=${GIT_REPO_DIR}
 ENV GIT_REPO_DEPLOY_DIR=${GIT_REPO_DEPLOY_DIR}
 ENV GIT_SSH_PUBKEYS_DIR=${GIT_SSH_PUBKEYS_DIR}
+ENV COMMON_GROUP=${COMMON_GROUP}
+
+
 
 # "--no-cache" is new in Alpine 3.3 and it avoid using
 # "--update + rm -rf /var/cache/apk/*" (to remove cache)
@@ -73,8 +78,6 @@ RUN chmod +x start.sh
 
 # Define arguments (usage: --build-arg LUSER=g)
 # ARG GIT_REPO_NAME=repo
-
-ARG COMMON_GROUP=nodegit
 
 # 6. Initialize the repo
 WORKDIR ${GIT_REPO_DIR}
