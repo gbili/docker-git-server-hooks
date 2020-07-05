@@ -204,7 +204,11 @@ Using a separate container, requires using a different port
 
 ## Running the node server
 
-Once your code has been copied to the `node-apps` volume, you still need to run it. Since it is a named volume, it should be easy for you to attach a different container that is capable of serving the node app from a filesystem. As well as monitoring changes to files in order to restart.
+Once your code has been copied to the `node-apps` volume, you still need to run the node server on it. Since it is a named volume, it should be easy for you to attach a different container that is capable of serving the node app from a `package*.json`. As well as monitoring changes to files in order to restart.
+
+### Monitoring changes to fs
+
+Every time you `git checkout` to the `node-apps` repo dir, it would be nice to let `node` know that it should restart. One way that seems to work well enoug is to rely on docker-compose's `restart: always` feature. Everytime files change, if you are able to make node fail, the `node-app-js` container should be restarted by _docker-compose_.
 
 **NOTE**: the cool thing with having a separate container, is that we can run different integration steps.
 
