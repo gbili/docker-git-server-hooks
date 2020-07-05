@@ -22,7 +22,8 @@ fi
 
 # Checking permissions and fixing SGID bit in repos folder
 # More info: https://github.com/jkarlosb/git-server-docker/issues/1
-if [ "$(ls -A ${GIT_REPOS_DIR}/)" ]; then
+if [ -d "${GIT_REPOS_DIR}" ]; then
+  echo "Setting up ${GIT_REPOS_DIR}";
   cd $GIT_REPOS_DIR
   chown -R git:${COMMON_GROUP} .
   chmod -R ug+rwX .
@@ -34,7 +35,8 @@ fi
 # so we give full access to it's group
 # IMPORTANT: if another container wants to write there,
 # add a group with same GID
-if [ "$(ls -A ${GIT_REPO_DEPLOY_DIR}/)" ]; then
+if [ -d "${GIT_REPO_DEPLOY_DIR}" ]; then
+  echo "Setting up ${GIT_REPO_DEPLOY_DIR}";
   cd ${GIT_REPO_DEPLOY_DIR}
   chown -R node:${COMMON_GROUP} .
   chmod -R ug+rwX .
