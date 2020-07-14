@@ -6,7 +6,7 @@ A docker layer intended to allow simple deployment of code using a git server an
 
 There was a problem making sure that once you `git push` to the git server, git was able to deploy the code to `node-apps` app directory. `node-apps` is a volume shared between `git-server-hooks` container and `node-app-js` container.
 
-As [this post suggests](https://medium.com/@nielssj/docker-volumes-and-file-system-permissions-772c1aee23ca), what matters to being able to write to a dir, is that containers' user/group which waht to write, has the same UID or GID than the user or group having read/write/execute powers on the volume (regardless of name or passwords).
+As [this post suggests](https://medium.com/@nielssj/docker-volumes-and-file-system-permissions-772c1aee23ca), what matters to being able to write to a dir, is that the containers' user/group that wants to write, has the same UID or GID as the user or group having read/write/execute powers on the volume (regardless of name or passwords).
 
 Since we are using a shared volume, it will be created at runtime, and thus all the code responsible for giving specific users or group permissions on the volume should execute at runtime and not at build time. That's why we place all the code in `start.sh`.
 
@@ -40,7 +40,11 @@ With this trick all the files created by `git` while checking out on `node-apps`
 
 **IMPORTANT**: if you try to change the users and groups, make sure to check the GID they get and use the same in the other containers sharing the volume. And also be careful of when you try to make those changes, because too late and you might no longer be `root` and too early and the volume may not exist yet.
 
-## Adding the keys
+## Installation
+
+In order to install a `git-server-hooks` in your machine, you need to have access to the image, or build it yourself (see below). Once you have a way to reference the image from the `docker-compose.yml` file, you can add all the other required config and `docker-compose up -d`. Still there is one critical step, making the your ssh keys (for git pushing) accessible in the volume where container expects to find them at launch. Read on.
+
+### Adding the keys
 
 When launching, `gbili/git-server-hooks` will execute `start.sh` script. The script uses the keys present in `/<GIT_SERVER_DIR>/keys/somekey.pub` and adds them to to the end of `/home/git/.ssh/authorized_keys`'s file.
 

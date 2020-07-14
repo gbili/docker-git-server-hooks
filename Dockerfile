@@ -61,7 +61,7 @@ RUN ssh-keygen -A
 # Create the server base dir
 WORKDIR ${GIT_SERVER_DIR}
 
-# -s flag changes user's shell
+# -s flag would change user's shell
 # Eg: -s /usr/bin/git-shell
 RUN mkdir ${GIT_SSH_PUBKEYS_DIR} \
   && adduser --disabled-password git \
