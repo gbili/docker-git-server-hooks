@@ -21,17 +21,11 @@ ARG NODE_SERVER_DIR=/node-server
 # user
 ARG GIT_REPO_OWNERNAME=user
 
-# repo
-ARG GIT_REPO_NAME=repo
-
 # /u/user
 ARG GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPO_OWNERNAME}
 
-# /u/user/repo.git
-ARG GIT_REPO_DIR=${GIT_REPOS_DIR}/${GIT_REPO_NAME}.git
-
-# /node-server/user/repo
-ARG GIT_REPO_DEPLOY_DIR=${NODE_SERVER_DIR}/${GIT_REPO_OWNERNAME}/${GIT_REPO_NAME}
+# /node-server/user
+ARG GIT_REPOS_DEPLOY_ROOT_DIR=${NODE_SERVER_DIR}/${GIT_REPO_OWNERNAME}
 
 # /u/keys
 ARG GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys
@@ -39,13 +33,8 @@ ARG GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys
 ENV COMMON_GROUP=${COMMON_GROUP}
 ENV GIT_HOME=${GIT_HOME}
 ENV GIT_SERVER_DIR=${GIT_SERVER_DIR}
-ENV GIT_REPO_NAME=${GIT_REPO_NAME}
 ENV GIT_REPOS_DIR=${GIT_REPOS_DIR}
-ENV GIT_REPO_DIR=${GIT_REPO_DIR}
-ENV GIT_REPO_DEPLOY_DIR=${GIT_REPO_DEPLOY_DIR}
 ENV GIT_SSH_PUBKEYS_DIR=${GIT_SSH_PUBKEYS_DIR}
-
-
 
 # "--no-cache" is new in Alpine 3.3 and it avoid using
 # "--update + rm -rf /var/cache/apk/*" (to remove cache)
@@ -77,19 +66,6 @@ RUN chmod +x start.sh
 
 # IMPORTANT: Remember to add your public keys to the git-server-keys volume using a temporary container before starting this one
 
-# Define arguments (usage: --build-arg LUSER=g)
-# ARG GIT_REPO_NAME=repo
-
-# 6. Initialize the repo
-WORKDIR ${GIT_REPO_DIR}
-RUN git init --bare
-
-# 7. Add a post-receive hook
-# You can use ENV variables within them but make sure
-# to remove the $ and use sed to replace them with the value (see start.sh)
-COPY hooks/post-receive.tpl ${GIT_REPO_DIR}/hooks/post-receive
-RUN chmod -R ug+rwx ${GIT_REPO_DIR}/hooks/post-receive
-
 # We need a common group for node and git
 # to allow each of them writing contents to deploy dir
 RUN addgroup ${COMMON_GROUP}
@@ -99,12 +75,16 @@ RUN addgroup node ${COMMON_GROUP}
 # Allow "git" user's group to write on its files
 USER git
 RUN umask 002
+USER node
+RUN umask 002
 
 # Go back to root
 USER root
 
 # Initialize the deployment dir for the repo
-WORKDIR ${GIT_REPO_DEPLOY_DIR}
+# WORKDIR ${GIT_REPO_DEPLOY_DIR}
+# Initialize the deployment root dir
+WORKDIR ${GIT_REPOS_DEPLOY_ROOT_DIR}
 
 # Let bilder know the GID of the common group
 # This will allow sharing volume permissions
