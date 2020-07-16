@@ -8,24 +8,23 @@ ENV REFRESHED_AT $REFRESHED_AT
 
 # nodegit
 ARG COMMON_GROUP=nodegit
+ENV COMMON_GROUP=${COMMON_GROUP}
 
 # /home/git
 ARG GIT_HOME=/home/git
+ENV GIT_HOME=${GIT_HOME}
 
 # /u
 ARG GIT_SERVER_DIR=/u
+ENV GIT_SERVER_DIR=${GIT_SERVER_DIR}
 
 # /node-server
 ARG NODE_SERVER_DIR=/node-server
+ENV NODE_SERVER_DIR=${NODE_SERVER_DIR}
 
 # /u/keys
 ARG GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys
-
-ENV COMMON_GROUP=${COMMON_GROUP}
-ENV GIT_HOME=${GIT_HOME}
-ENV GIT_SERVER_DIR=${GIT_SERVER_DIR}
 ENV GIT_SSH_PUBKEYS_DIR=${GIT_SSH_PUBKEYS_DIR}
-ENV NODE_SERVER_DIR=${NODE_SERVER_DIR}
 
 # "--no-cache" is new in Alpine 3.3 and it avoid using
 # "--update + rm -rf /var/cache/apk/*" (to remove cache)
