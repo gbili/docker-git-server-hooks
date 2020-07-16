@@ -18,23 +18,14 @@ ARG GIT_SERVER_DIR=/u
 # /node-server
 ARG NODE_SERVER_DIR=/node-server
 
-# user
-ARG GIT_REPOS_OWNERNAME=user
-
-# /u/user
-ARG GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPOS_OWNERNAME}
-
-# /node-server/user
-ARG GIT_REPOS_DEPLOY_ROOT_DIR=${NODE_SERVER_DIR}/${GIT_REPOS_OWNERNAME}
-
 # /u/keys
 ARG GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys
 
 ENV COMMON_GROUP=${COMMON_GROUP}
 ENV GIT_HOME=${GIT_HOME}
 ENV GIT_SERVER_DIR=${GIT_SERVER_DIR}
-ENV GIT_REPOS_DIR=${GIT_REPOS_DIR}
 ENV GIT_SSH_PUBKEYS_DIR=${GIT_SSH_PUBKEYS_DIR}
+ENV NODE_SERVER_DIR=${NODE_SERVER_DIR}
 
 # "--no-cache" is new in Alpine 3.3 and it avoid using
 # "--update + rm -rf /var/cache/apk/*" (to remove cache)
@@ -80,16 +71,6 @@ RUN umask 002
 
 # Go back to root
 USER root
-
-# Initialize the deployment dir for the repo
-# WORKDIR ${GIT_REPO_DEPLOY_DIR}
-# Initialize the deployment root dir
-WORKDIR ${GIT_REPOS_DEPLOY_ROOT_DIR}
-
-# Let bilder know the GID of the common group
-# This will allow sharing volume permissions
-# with other containers
-RUN getent group ${COMMON_GROUP}
 
 EXPOSE 22
 

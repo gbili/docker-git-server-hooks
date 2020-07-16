@@ -5,6 +5,7 @@ services:
     image: docker.zivili.ch/gbili/git-server-hooks:0.0.4
     container_name: git-server-hooks
     environment:
+      GIT_REPOS_OWNERNAME: <GIT_REPOS_OWNERNAME>
       VIRTUAL_HOST: <VIRTUAL_HOST>
       LETSENCRYPT_HOST: <VIRTUAL_HOST>
       LETSENCRYPT_EMAIL: mail@<VIRTUAL_HOST>
