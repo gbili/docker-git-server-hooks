@@ -104,7 +104,7 @@ Let's do it. Steps are:
 Once these are added and you have set up and reverse nginx proxy for ssl, you can push with:
 
 ```bash
-git remote add live ssh://git@<HOST_NAME>:2222/<GIT_SERVER_DIR>/<GIT_REPO_OWNERNAME>/<GIT_REPO_NAME>.git
+git remote add live ssh://git@<HOST_NAME>:2222/<GIT_SERVER_DIR>/<GIT_REPOS_OWNERNAME>/<GIT_REPO_NAME>.git
 git push live master
 ```
 
@@ -112,11 +112,9 @@ git push live master
 
 - `COMMON_GROUP=nodegit`: the group that `git` and `node` have in common. It is important in this container to run the `npm install` command on `post-receive` hook. **IMPORTANT** it's GID should be reused in `node-app-js`, otherwise you won't be able to execute `npm` or `node` (aka serving the app).
 - `GIT_HOME=/home/git`: `/home/git`
-- `GIT_REPO_DEPLOY_DIR=${NODE_SERVER_DIR}/${GIT_REPO_OWNERNAME}/${GIT_REPO_NAME}`: `/node-server/user/repo`, this is where the code will be deployed to on `post-receive`. This directory is a volume shared with the `node-app-js` container so the permissions are really important and can easily get messed up.
-- `GIT_REPO_DIR=${GIT_REPOS_DIR}/${GIT_REPO_NAME}.git`: `/u/user/repo.git`: the `--bare` repository directory where your pushes will go.
-- `GIT_REPO_NAME=repo`: `repo`, the `--bare` repository name
-- `GIT_REPO_OWNERNAME=user`: `user`, the `--bare` repository's parent dirname. **TODO**: one day will accommodate many repos for single user.
-- `GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPO_OWNERNAME}`: `/u/user`, the `--bare` repository's parent dir.
+- `GIT_REPOS_DEPLOY_ROOT_DIR=${NODE_SERVER_DIR}/${GIT_REPOS_OWNERNAME}`: `/node-server/user`, this is the root of app directories where the code will be deployed to on `post-receive`. This directory is a volume shared with the `node-app-js` container so the permissions are really important and can easily get messed up.
+- `GIT_REPOS_OWNERNAME=user`: `user`, the `--bare` repository's parent dirname. **TODO**: one day will accommodate many repos for single user.
+- `GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPOS_OWNERNAME}`: `/u/user`, the `--bare` repository's parent dir.
 - `GIT_SERVER_DIR=/u`: `/u`, the directory where _repositories_ and _ssh keys_ are stored
 - `GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys`: `/u/keys`, where _ssh keys_ are stored
 - `NODE_SERVER_DIR=/node-server`: `/node-server`, the root mount point for deployed node apps. Apps live in subdirectories see `GIT_REPO_DEPLOY_DIR`.
@@ -128,10 +126,8 @@ Env variables use defaults from build arguments. See arguments for descriptions.
 - `COMMON_GROUP=${COMMON_GROUP}`: `nodegit`
 - `GIT_HOME=${GIT_HOME}`: `/home/git`
 - `GIT_SERVER_DIR=${GIT_SERVER_DIR}`: `/u`
-- `GIT_REPO_NAME=${GIT_REPO_NAME}`: `repo`
 - `GIT_REPOS_DIR=${GIT_REPOS_DIR}`: `/u/user`
-- `GIT_REPO_DIR=${GIT_REPO_DIR}`: `/u/user/repo.git`
-- `GIT_REPO_DEPLOY_DIR=${GIT_REPO_DEPLOY_DIR}`: `/node-server/user/repo`
+- `GIT_REPOS_DEPLOY_ROOT_DIR=${GIT_REPOS_DEPLOY_ROOT_DIR}`: `/node-server/user`
 - `GIT_SSH_PUBKEYS_DIR=${GIT_SSH_PUBKEYS_DIR}`: `/u/keys`
 
 ### Env variables in git hooks scripts
@@ -148,9 +144,12 @@ Example changing the repo dir from `/u/user/repo.git` to `/u/gbili/blog.git` you
 
 ```sh
 sudo docker build \
---build-arg GIT_REPO_OWNERNAME=gbili \
---build-arg GIT_REPO_NAME=blog \
--t gbili/git-server-hooks:0.0.5
+--build-arg GIT_REPOS_OWNERNAME=gbili \
+-t gbili/git-server-hooks:0.0.5 \
+.
+
+# one-liner
+sudo docker build --build-arg GIT_REPOS_OWNERNAME=gbili -t docker.zivili.ch/gbili/git-server-hooks:0.1.0 .
 ```
 
 ## Addig new repositories
