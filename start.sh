@@ -78,4 +78,4 @@ getent group ${COMMON_GROUP}
 ls -la ${GIT_REPOS_DEPLOY_ROOT_DIR}
 
 # -D flag avoids executing sshd as a daemon
-/usr/sbin/sshd -D
+exec /usr/sbin/sshd -D
