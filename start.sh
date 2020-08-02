@@ -24,7 +24,7 @@ mkdir -p ${GIT_REPOS_DEPLOY_ROOT_DIR}
 # Let bilder know the GID of the common group
 # This will allow sharing volume permissions
 # with other containers
-RUN getent group ${COMMON_GROUP}
+getent group ${COMMON_GROUP}
 
 # If there is some public key in keys folder
 # then it copies its contents to authorized_keys file
