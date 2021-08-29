@@ -2,7 +2,7 @@ FROM node:erbium-alpine
 # https://github.com/timbru31/docker-node-alpine-git
 LABEL maintainer "Guillermo Pages <docker@guillermo.at>"
 
-# Allow cache invalidation 
+# Allow cache invalidation
 ARG REFRESHED_AT
 ENV REFRESHED_AT $REFRESHED_AT
 
