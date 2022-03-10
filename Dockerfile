@@ -1,4 +1,4 @@
-FROM node:erbium-alpine
+FROM node:gallium-alpine
 # https://github.com/timbru31/docker-node-alpine-git
 LABEL maintainer "Guillermo Pages <docker@guillermo.at>"
 
