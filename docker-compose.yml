@@ -2,19 +2,19 @@ version: '3.7'
 
 services:
   git-server:
-    image: docker.zivili.ch/gbili/git-server-hooks:0.0.4
+    image: "${DOCKER_GIT_SERVER_HOOKS_IMAGE}"
     container_name: git-server-hooks
     environment:
-      GIT_REPOS_OWNERNAME: <GIT_REPOS_OWNERNAME>
-      VIRTUAL_HOST: <VIRTUAL_HOST>
-      LETSENCRYPT_HOST: <VIRTUAL_HOST>
-      LETSENCRYPT_EMAIL: mail@<VIRTUAL_HOST>
+      GIT_REPOS_OWNERNAME: "${GIT_REPOS_OWNERNAME}"
+      VIRTUAL_HOST: "${VIRTUAL_HOST}"
+      LETSENCRYPT_HOST: "${VIRTUAL_HOST}"
+      LETSENCRYPT_EMAIL: "mail@${VIRTUAL_HOST}"
     ports:
       - "2222:22"
     volumes:
-      - ssh-keys:/<GIT_SERVER_DIR>/keys
-      - git-repos:/<GIT_SERVER_DIR>/<GIT_REPOS_OWNERNAME>
-      - node-apps:/node-server/<GIT_REPOS_OWNERNAME>
+      - "ssh-keys:/${GIT_SERVER_DIR}/keys"
+      - "git-repos:/${GIT_SERVER_DIR}/${GIT_REPOS_OWNERNAME}"
+      - "node-apps:/node-server/${GIT_REPOS_OWNERNAME}"
     restart: always
 
 volumes:

@@ -55,7 +55,6 @@ Since we want to push to the Git repo, we must make sure `start.sh` will find ou
 > Adding them to the built image is a bad idea if your image is not private. So, how can we put the RSA keys to our container without adding them to the docker image ?
 
 The solution is to use _named volumes_. We will create a volume named `ssh-keys` and mount it to our container at `/<GIT_SERVER_DIR>/keys`. But of course this does not solve our problem entirely, we still need to put the data in it before our `gbili/git-server-hooks` container starts.
-
 We can do that using a temporary container that will solely serve as a volume "populator". We will remove the temporary container once it has fulfilled its duty of adding the keys to the volume `ssh-keys`.
 
 **IMPORTANT**: `docker-compose` may name your volumes with a prefix, so `ssh-keys` volume in `docker-compose.yml` may end up renamed: `git-sever-hooks_ssh-keys`
@@ -101,7 +100,7 @@ Let's do it. Steps are:
    > more /home/git/.ssh/authorized_keys
    ```
 
-Once these are added and you have set up and reverse nginx proxy for ssl, you can push with:
+Once these are added and you have set up and reverse NGiNX proxy for ssl, you can push with:
 
 ```bash
 git remote add live ssh://git@<HOST_NAME>:2222/<GIT_SERVER_DIR>/<GIT_REPOS_OWNERNAME>/<GIT_REPO_NAME>.git
@@ -112,8 +111,8 @@ git push live master
 
 - `COMMON_GROUP=nodegit`: the group that `git` and `node` have in common. It is important in this container to run the `npm install` command on `post-receive` hook. **IMPORTANT** it's GID should be reused in `node-app-js`, otherwise you won't be able to execute `npm` or `node` (aka serving the app).
 - `GIT_HOME=/home/git`: `/home/git`
-- `GIT_REPOS_DEPLOY_ROOT_DIR=${NODE_SERVER_DIR}/${GIT_REPOS_OWNERNAME}`: `/node-server/user`, this is the root of app directories where the code will be deployed to on `post-receive`. This directory is a volume shared with the `node-app-js` container so the permissions are really important and can easily get messed up.
-- `GIT_REPOS_OWNERNAME=user`: `user`, the `--bare` repository's parent dirname. **TODO**: one day will accommodate many repos for single user.
+- `GIT_REPOS_DEPLOY_ROOT_DIR=${NODE_SERVER_DIR}/${GIT_REPOS_OWNERNAME}`: `/node-server/<user>`, this is the root of app directories where the code will be deployed to on `post-receive`. This directory is a volume shared with the `node-app-js` container so the permissions are really important and can easily get messed up.
+- `GIT_REPOS_OWNERNAME=user`: `user`, the `--bare` repository's parent directory name. **TODO**: one day will accommodate many repos for single user.
 - `GIT_REPOS_DIR=${GIT_SERVER_DIR}/${GIT_REPOS_OWNERNAME}`: `/u/user`, the `--bare` repository's parent dir.
 - `GIT_SERVER_DIR=/u`: `/u`, the directory where _repositories_ and _ssh keys_ are stored
 - `GIT_SSH_PUBKEYS_DIR=${GIT_SERVER_DIR}/keys`: `/u/keys`, where _ssh keys_ are stored
@@ -126,8 +125,8 @@ Env variables use defaults from build arguments. See arguments for descriptions.
 - `COMMON_GROUP=${COMMON_GROUP}`: `nodegit`
 - `GIT_HOME=${GIT_HOME}`: `/home/git`
 - `GIT_SERVER_DIR=${GIT_SERVER_DIR}`: `/u`
-- `GIT_REPOS_DIR=${GIT_REPOS_DIR}`: `/u/user`
-- `GIT_REPOS_DEPLOY_ROOT_DIR=${GIT_REPOS_DEPLOY_ROOT_DIR}`: `/node-server/user`
+- `GIT_REPOS_DIR=${GIT_REPOS_DIR}`: `/u/<user>`
+- `GIT_REPOS_DEPLOY_ROOT_DIR=${GIT_REPOS_DEPLOY_ROOT_DIR}`: `/node-server/<user>`
 - `GIT_SSH_PUBKEYS_DIR=${GIT_SSH_PUBKEYS_DIR}`: `/u/keys`
 
 ### Env variables in git hooks scripts
@@ -140,7 +139,7 @@ If you need env variables in your scripts, you should `sed` them at build time. 
 
 For building there are a set of arguments you can use to change for example the repository dir, check Arguments section.
 
-Example changing the repo dir from `/u/user/repo.git` to `/u/gbili/blog.git` you do:
+Example changing the repo dir from `/u/<user>/repo.git` to `/u/gbili/blog.git` you do:
 
 ```sh
 sudo docker build \
@@ -152,40 +151,50 @@ sudo docker build \
 sudo docker build --build-arg GIT_REPOS_OWNERNAME=gbili -t docker.zivili.ch/gbili/git-server-hooks:0.1.0 .
 ```
 
-## Addig new repositories
+## Adding new repositories
 
 There are different possible approaches for adding new repositories.
 
 ### Option 1: manually login
 
-The easiest one to set up, yet maybe the least handy is to login to your container and create the repo manually (adapt `user` and `newrepo` to your situation):
+The easiest one to set up, yet maybe the least handy is to login to your container and create the repo manually (adapt `<user>` and `<newrepo>` to your situation):
 
-1. Go to your host machine
-2. Login to your container
+1. Log into your container
+
+   - Directly:
+
+     ```sh
+     ssh -p 2222 git@<VIRTUAL_HOST>
+     ```
+
+   - Indirectly:
+
+     1. Go to your machine, then login to your container
+
+        ```sh
+        ssh host-machine
+        docker exec -it git-server-hooks sh
+        ```
+
+     2. Change the user to `git` so we don't have issues later:
+
+        ```sh
+        su git
+        ```
+
+2. Change to git repos directory and initialize:
 
    ```sh
-   docker exec -it git-server-hooks sh
-   ```
-
-3. Change the user to `git` so we don't have issues later:
-
-   ```sh
-   su git
-   ```
-
-4. Change to git repos directory directory and initialize:
-
-   ```sh
-   cd /u/user
-   mkdir newrepo.git
-   cd newrepo.git
+   cd /u/<user>
+   mkdir <newrepo>.git
+   cd <newrepo>.git
    git init --bare
    ```
 
-5. exit and done, you can now use:
+3. exit and done, you can now use:
 
    ```sh
-   git remote add live ssh://git@<VIRTUAL_HOST>:2222/u/user/newrepo.git
+   git remote add live ssh://git@<VIRTUAL_HOST>:2222/u/<user>/<newrepo>.git
    git push live
    ```
 
@@ -203,15 +212,15 @@ Using a separate container, requires using a different port
 
 ## Adding a new user
 
-**TODO**: Adding a new user is not possible. For one, they would share access to `git` user, therefore they could run scripts on each others' land. Secondly, the `git-server-repos` volume is mounted relative to one user. We would need to mount it relative to the `git-server` root, and adapt scripts accordingly (which is feasable).
+**TODO**: Adding a new user is not possible. For one, they would share access to `git` user, therefore they could run scripts on each others' land. Secondly, the `git-server-repos` volume is mounted relative to one user. We would need to mount it relative to the `git-server` root, and adapt scripts accordingly (which is feasible).
 
 ## Running the node server
 
 Once your code has been copied to the `node-apps` volume, you still need to run the node server on it. Since it is a named volume, it should be easy for you to attach a different container that is capable of serving the node app from a `package*.json`. As well as monitoring changes to files in order to restart.
 
-### Monitoring changes to fs
+### Monitoring changes to file system
 
-Every time you `git checkout` to the `node-apps` repo dir, it would be nice to let `node` know that it should restart. One way that seems to work well enoug is to rely on docker-compose's `restart: always` feature. Everytime files change, if you are able to make node fail, the `node-app-js` container should be restarted by _docker-compose_.
+Every time you `git checkout` to the `node-apps` repo dir, it would be nice to let `node` know that it should restart. One way that seems to work well enough is to rely on docker-compose's `restart: always` feature. Every time files change, if you are able to make node fail, the `node-app-js` container should be restarted by _docker-compose_.
 
 **NOTE**: the cool thing with having a separate container, is that we can run different integration steps.
 
