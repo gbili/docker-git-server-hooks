@@ -26,5 +26,5 @@ volumes:
 # e.g. let's encrypt nginx certbot (created separately)
 networks:
   default:
-    external:
-      name: nginx-proxy
+    name: nginx-proxy
+    external: true
