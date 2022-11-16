@@ -12,8 +12,8 @@ services:
     ports:
       - "2222:22"
     volumes:
-      - "ssh-keys:/${GIT_SERVER_DIR}/keys"
-      - "git-repos:/${GIT_SERVER_DIR}/${GIT_REPOS_OWNERNAME}"
+      - "ssh-keys:${GIT_SERVER_DIR}/keys"
+      - "git-repos:${GIT_SERVER_DIR}/${GIT_REPOS_OWNERNAME}"
       - "node-apps:/node-server/${GIT_REPOS_OWNERNAME}"
     restart: always
 
